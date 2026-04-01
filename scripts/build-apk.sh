@@ -11,6 +11,9 @@ APK_DIR="$REPO_DIR/apps/android-capture"
 OUTPUT_DIR="$HOME/apks"
 mkdir -p "$OUTPUT_DIR"
 
+# Ensure local.properties exists with sdk.dir (required by Android Gradle Plugin)
+echo "sdk.dir=$ANDROID_HOME" > "$APK_DIR/local.properties"
+
 echo "=== Building NewsPing Capture APKs ==="
 
 for EMU_NUM in 1 2 3; do
