@@ -3,32 +3,45 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-function LoginForm() {
-  const { login } = useAuth();
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const passwordReset = searchParams.get("reset") === "1";
+  const token = searchParams.get("token") ?? "";
 
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+    if (!token) {
+      setError("Missing reset token. Use the link from your email.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await login(email, password);
-      router.push("/feed");
+      await authApi.resetPassword(token, password);
+      router.push("/login?reset=1");
     } catch (err: any) {
-      setError(err?.response?.data?.error ?? "Something went wrong");
+      setError(err?.response?.data?.error ?? "Something went wrong. The link may have expired.");
     } finally {
       setLoading(false);
     }
@@ -37,55 +50,44 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
-        <CardDescription>Welcome back to NewsPing</CardDescription>
+        <CardTitle>Set new password</CardTitle>
+        <CardDescription>Choose a new password for your account.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {passwordReset && (
-            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
-              Password updated. Log in with your new password.
-            </p>
-          )}
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-gray-900">
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">New password</Label>
             <Input
               id="password"
               type="password"
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoComplete="current-password"
+              autoComplete="new-password"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm">Confirm password</Label>
+            <Input
+              id="confirm"
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              autoComplete="new-password"
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? "Saving..." : "Set new password"}
           </Button>
         </form>
         <p className="text-sm text-center text-gray-500 mt-4">
-          No account?{" "}
-          <Link href="/signup" className="text-gray-900 font-medium hover:underline">
-            Sign up
+          <Link href="/login" className="text-gray-900 font-medium hover:underline">
+            Back to log in
           </Link>
         </p>
       </CardContent>
@@ -93,10 +95,10 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <ResetPasswordForm />
     </Suspense>
   );
 }

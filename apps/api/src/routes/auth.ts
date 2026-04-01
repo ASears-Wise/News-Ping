@@ -147,6 +147,104 @@ app.post("/logout", async (c) => {
   return c.json({ status: "ok" });
 });
 
+app.post("/forgot-password", async (c) => {
+  const { email } = await c.req.json<{ email: string }>();
+
+  if (!email) {
+    return c.json({ error: "Email is required" }, 400);
+  }
+
+  const user = await c.env.DB.prepare("SELECT id, email, name FROM users WHERE email = ?")
+    .bind(email.toLowerCase())
+    .first<Pick<User, "id" | "email" | "name">>();
+
+  // Always return success to prevent user enumeration
+  if (!user) {
+    return c.json({ status: "ok" });
+  }
+
+  // Expire any existing unused tokens for this user
+  await c.env.DB.prepare(
+    "UPDATE password_reset_tokens SET used_at = datetime('now') WHERE user_id = ? AND used_at IS NULL"
+  )
+    .bind(user.id)
+    .run();
+
+  const tokenRaw = crypto.randomUUID();
+  const tokenHash = await sha256(tokenRaw);
+  const tokenId = ulid();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+  await c.env.DB.prepare(
+    "INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)"
+  )
+    .bind(tokenId, user.id, tokenHash, expiresAt)
+    .run();
+
+  const origin = c.req.header("Origin") ?? "https://newsping.io";
+  const resetUrl = `${origin}/reset-password?token=${tokenRaw}`;
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "NewsPing <noreply@newsping.io>",
+      to: user.email,
+      subject: "Reset your NewsPing password",
+      html: `
+        <p>Hi${user.name ? ` ${user.name}` : ""},</p>
+        <p>We received a request to reset your NewsPing password. Click the link below to set a new password. This link expires in 1 hour.</p>
+        <p><a href="${resetUrl}" style="background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Reset password</a></p>
+        <p>If you didn't request this, you can safely ignore this email.</p>
+        <p style="color:#888;font-size:12px;">NewsPing · newsping.io</p>
+      `,
+    }),
+  });
+
+  return c.json({ status: "ok" });
+});
+
+app.post("/reset-password", async (c) => {
+  const { token, password } = await c.req.json<{ token: string; password: string }>();
+
+  if (!token || !password) {
+    return c.json({ error: "Token and password are required" }, 400);
+  }
+  if (password.length < 8) {
+    return c.json({ error: "Password must be at least 8 characters" }, 400);
+  }
+
+  const tokenHash = await sha256(token);
+  const stored = await c.env.DB.prepare(
+    "SELECT id, user_id, expires_at FROM password_reset_tokens WHERE token_hash = ? AND used_at IS NULL"
+  )
+    .bind(tokenHash)
+    .first<{ id: string; user_id: string; expires_at: string }>();
+
+  if (!stored || new Date(stored.expires_at) < new Date()) {
+    return c.json({ error: "Invalid or expired reset token" }, 400);
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?").bind(
+      passwordHash,
+      stored.user_id
+    ),
+    c.env.DB.prepare("UPDATE password_reset_tokens SET used_at = datetime('now') WHERE id = ?").bind(stored.id),
+    // Revoke all refresh tokens so existing sessions are invalidated
+    c.env.DB.prepare(
+      "UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ? AND revoked_at IS NULL"
+    ).bind(stored.user_id),
+  ]);
+
+  return c.json({ status: "ok" });
+});
+
 app.get("/me", requireAuth, async (c) => {
   const payload = c.get("user");
   const user = await c.env.DB.prepare("SELECT id, email, name, created_at FROM users WHERE id = ?")

@@ -114,6 +114,8 @@ export const authApi = {
   logout: () => api.post("/api/auth/logout"),
   me: () => api.get<{ data: User }>("/api/auth/me"),
   refresh: () => api.post<{ access_token: string; user: User }>("/api/auth/refresh"),
+  forgotPassword: (email: string) => api.post("/api/auth/forgot-password", { email }),
+  resetPassword: (token: string, password: string) => api.post("/api/auth/reset-password", { token, password }),
 };
 
 export const notificationsApi = {
