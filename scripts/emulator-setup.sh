@@ -67,7 +67,7 @@ export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 
 # Accept licenses and install SDK components
 yes | sdkmanager --licenses || true
-sdkmanager "platform-tools" "emulator" "platforms;android-33" "system-images;android-33;google_apis;x86_64"
+sdkmanager "platform-tools" "emulator" "platforms;android-33" "build-tools;33.0.2" "system-images;android-33;google_apis;x86_64"
 
 # Create 3 AVDs
 for i in 1 2 3; do
