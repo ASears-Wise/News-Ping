@@ -1,0 +1,2 @@
+# PushPulse emulator health check — every 5 minutes
+*/5 * * * * /home/pushpulse/PushPulse/scripts/health-check.sh

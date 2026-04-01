@@ -1,0 +1,30 @@
+{
+  "name": "pushpulse-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-27",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pushpulse-db",
+      "database_id": "53168b1c-1fe5-478f-b18a-b60b285e787e",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "0ae58f487bcb46249b09de10ac74117d"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "STORAGE",
+      "bucket_name": "pushpulse-storage"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production"
+  }
+  // Secrets (set via `wrangler secret put`):
+  // INGEST_API_KEY, JWT_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
+}

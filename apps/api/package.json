@@ -1,0 +1,20 @@
+{
+  "name": "pushpulse-api",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply pushpulse-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply pushpulse-db --remote"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "stripe": "^21.0.1",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250327.0",
+    "typescript": "^5.8.0",
+    "wrangler": "^4.6.0"
+  }
+}
