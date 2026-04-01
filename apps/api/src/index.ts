@@ -15,7 +15,7 @@ app.use("/*", logger());
 app.use(
   "/*",
   cors({
-    origin: ["http://localhost:3000", "https://newsping.io", "https://www.newsping.io"],
+    origin: ["http://localhost:3000", "https://newsping.io", "https://www.newsping.io", "https://newsping-web.alec-629.workers.dev"],
     credentials: true,
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

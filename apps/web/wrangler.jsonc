@@ -5,5 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets"
-  }
+  },
+  "routes": [
+    { "pattern": "newsping.io", "custom_domain": true },
+    { "pattern": "www.newsping.io", "custom_domain": true }
+  ]
 }

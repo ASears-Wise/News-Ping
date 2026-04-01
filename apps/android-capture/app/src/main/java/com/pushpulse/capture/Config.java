@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Config {
     // Set via build config or environment
-    public static final String API_URL = "https://pushpulse-api.alec-629.workers.dev/api/ingest";
+    public static final String API_URL = "https://api.newsping.io/api/ingest";
     public static final String API_KEY = "eaf0493ca5d268ece01479167a1c9efb8cf4c637521c4806554baa9c307cfd6c";
     public static final String EMULATOR_ID = "emu-1";
     public static final int HEARTBEAT_INTERVAL_MS = 60_000;

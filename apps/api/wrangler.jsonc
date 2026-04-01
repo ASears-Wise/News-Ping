@@ -24,7 +24,10 @@
   ],
   "vars": {
     "ENVIRONMENT": "production"
-  }
+  },
+  "routes": [
+    { "pattern": "api.newsping.io", "custom_domain": true }
+  ]
   // Secrets (set via `wrangler secret put`):
   // INGEST_API_KEY, JWT_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY
 }
